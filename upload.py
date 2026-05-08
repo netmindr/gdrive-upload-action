@@ -6,11 +6,6 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-print(f"Working directory: {os.getcwd()}")
-print(f"Repo root contents: {list(Path('/github/workspace').iterdir())}")
-print(f"GDRIVE_FOLDER_ID: {os.environ.get('GDRIVE_FOLDER_ID', 'NOT SET')}")
-print(f"GDRIVE_CREDENTIALS set: {'GDRIVE_CREDENTIALS' in os.environ}")
-
 # Auth
 credentials_json = json.loads(os.environ["GDRIVE_CREDENTIALS"])
 credentials = service_account.Credentials.from_service_account_info(
@@ -21,10 +16,14 @@ service = build("drive", "v3", credentials=credentials)
 
 ROOT_FOLDER_ID = os.environ["GDRIVE_FOLDER_ID"]
 
-num_of_files = 0
-num_of_folders = 0
+num_of_uploaded_files = 0
+num_of_updated_files = 0
+num_of_created_folders = 0
+num_of_existing_folders = 0
 
 def get_or_create_folder(name, parent_id):
+    global num_of_created_folders
+    global num_of_existing_folders
     query = (
         f"name='{name}' and "
         f"'{parent_id}' in parents and "
@@ -39,6 +38,7 @@ def get_or_create_folder(name, parent_id):
     ).execute()
     folders = results.get("files", [])
     if folders:
+        num_of_existing_folders += 1
         return folders[0]["id"]
 
     metadata = {
@@ -51,10 +51,13 @@ def get_or_create_folder(name, parent_id):
         fields="id",
         supportsAllDrives=True
     ).execute()
+    num_of_created_folders += 1
     return folder["id"]
 
 
 def upload_file(local_path, parent_id):
+    global num_of_uploaded_files
+    global num_of_updated_files
     filename = local_path.name
 
     if filename.endswith(".py"):
@@ -83,6 +86,7 @@ def upload_file(local_path, parent_id):
             media_body=media,
             supportsAllDrives=True
         ).execute()
+        num_of_updated_files += 1
         # print(f"  Updated: {local_path}")
     else:
         metadata = {"name": filename, "parents": [parent_id]}
@@ -92,12 +96,11 @@ def upload_file(local_path, parent_id):
             fields="id",
             supportsAllDrives=True
         ).execute()
+        num_of_uploaded_files += 1
         # print(f"  Uploaded: {local_path}")
 
 
 def upload_directory(local_dir, parent_id):
-    global num_of_files, num_of_folders
-
     for item in sorted(local_dir.iterdir()):
         if item.name.startswith("."):
             continue
@@ -105,10 +108,8 @@ def upload_directory(local_dir, parent_id):
             # print(f"Folder: {item}")
             folder_id = get_or_create_folder(item.name, parent_id)
             upload_directory(item, folder_id)
-            num_of_folders += 1
         elif item.is_file():
             upload_file(item, parent_id)
-            num_of_files += 1
 
 # Debug
 # print(f"Verifying access to folder ID: {ROOT_FOLDER_ID}")
@@ -136,4 +137,4 @@ repo_root = Path("/github/workspace")
 # Start upload
 print(f"Starting upload to folder ID: {ROOT_FOLDER_ID}")
 upload_directory(repo_root, ROOT_FOLDER_ID)
-print(f"Successfully uploaded {num_of_folders} folders and {num_of_files} files.")
+print(f"Successfully uploaded {num_of_existing_folders} existing and {num_of_created_folders} new folders and {num_of_uploaded_files} new and {num_of_updated_files} updated files.")
