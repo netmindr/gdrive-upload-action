@@ -126,7 +126,7 @@ def upload_directory(local_dir, parent_id):
 # print(f"Current contents: {results.get('files', [])}")
 
 # Start upload from repo root
-repo_root = Path(".")
+repo_root = Path("/github/workspace")
 
 # Start upload
 print(f"Starting upload to folder ID: {ROOT_FOLDER_ID}")
