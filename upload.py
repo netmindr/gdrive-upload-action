@@ -6,6 +6,11 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
+print(f"Working directory: {os.getcwd()}")
+print(f"Repo root contents: {list(Path('/github/workspace').iterdir())}")
+print(f"GDRIVE_FOLDER_ID: {os.environ.get('GDRIVE_FOLDER_ID', 'NOT SET')}")
+print(f"GDRIVE_CREDENTIALS set: {'GDRIVE_CREDENTIALS' in os.environ}")
+
 # Auth
 credentials_json = json.loads(os.environ["GDRIVE_CREDENTIALS"])
 credentials = service_account.Credentials.from_service_account_info(
