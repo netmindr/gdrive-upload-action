@@ -1,0 +1,21 @@
+name: 'google-drive-upload-git-action'
+description: 'Upload files to Google Drive keeping directory structure'
+author: 'David Fisher'
+branding:
+  icon: 'archive'
+  color: 'green'
+
+inputs:
+  credentials:
+    description: 'Service account credentials JSON (unencoded)'
+    required: true
+  folder_id:
+    description: 'Google Drive folder or Shared Drive ID to upload into'
+    required: true
+
+runs:
+  using: docker
+  image: Dockerfile
+  env:
+    GDRIVE_CREDENTIALS: ${{ inputs.credentials }}
+    GDRIVE_FOLDER_ID: ${{ inputs.folder_id }}
