@@ -18,10 +18,9 @@ service = build("drive", "v3", credentials=credentials)
 ROOT_FOLDER_ID = os.environ["GDRIVE_FOLDER_ID"]
 
 num_of_uploaded_files = 0
-num_of_updated_files = 0
 num_of_created_folders = 0
-num_of_existing_folders = 0
 
+# Sanity check: Ensure that the target folder exists and is accessible
 def verify_target_folder(folder_id):
     print(f"Verifying access to Google Drive folder ID: {folder_id}")
     try:
@@ -80,7 +79,7 @@ def delete_item(item_id, item_name, mime_type, parent_id):
     except HttpError as e:
         if e.resp.status == 404:
             print(
-                f"Skipping item '{item_name}' because it no longer exists in Drive (404)."
+                f"'{item_name}' either no longer exists in Drive (404) or incorrect permissions set on drive."
             )
             return 0
         raise SystemExit(
