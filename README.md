@@ -2,16 +2,19 @@
 
 A GitHub Action that uploads your repository's files and folders to Google Drive, preserving the full directory structure.
 
+This action is intended to mirror the contents of a GitHub repository into a Google Drive folder or Shared Drive so the files are easy to access and review in Drive, especially for users who are not familiar with GitHub. On each run, it clears the destination contents first and then uploads the current repository contents, so the Drive is treated as a direct mirror of the repo.
+
 ## Features
 
 - Recursively uploads all files and folders to a target Google Drive folder or Shared Drive
-- Preserves directory structure
-- Overwrites existing files on subsequent runs
+- Clears the target folder contents before uploading so the Drive mirrors the repository state one-for-one
 - Skips hidden files and folders (dotfiles)
 
 ## Prerequisites
 
 Before using this action you will need:
+
+> This action is designed to treat the target Google Drive folder as a mirror of the GitHub repository. On each run, it clears the destination contents first and then uploads the current repository contents, so the destination should be used for this purpose intentionally.
 
 1. A **Google Cloud project** with the Drive API enabled
 2. A **Google Service Account** with a JSON key
