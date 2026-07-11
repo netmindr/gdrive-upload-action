@@ -40,6 +40,64 @@ def verify_target_folder(folder_id):
     print(f"Found Drive folder: '{folder.get('name', '<unknown>')}' ({folder.get('mimeType', '<unknown>')})")
     return folder
 
+def delete_item(item_id, item_name, mime_type, parent_id):
+    if mime_type == "application/vnd.google-apps.folder":
+        child_page_token = None
+        while True:
+            try:
+                child_results = service.files().list(
+                    q=f"'{item_id}' in parents and trashed=false",
+                    fields="files(id, name, mimeType)",
+                    supportsAllDrives=True,
+                    includeItemsFromAllDrives=True,
+                    pageSize=1000,
+                    pageToken=child_page_token
+                ).execute()
+            except Exception as e:
+                raise SystemExit(
+                    f"ERROR: Failed to list contents of folder '{item_name}' while clearing parent folder '{parent_id}'. "
+                    f"Drive API error: {e}"
+                ) from e
+
+            child_items = child_results.get("files", [])
+            for child in child_items:
+                delete_item(
+                    child["id"],
+                    child.get("name", "unknown"),
+                    child.get("mimeType"),
+                    item_name
+                )
+
+            child_page_token = child_results.get("nextPageToken")
+            if not child_page_token:
+                break
+
+    try:
+        service.files().delete(
+            fileId=item_id,
+            supportsAllDrives=True
+        ).execute()
+    except HttpError as e:
+        if e.resp.status == 404:
+            print(
+                f"Skipping item '{item_name}' because it no longer exists in Drive (404)."
+            )
+            return 0
+        raise SystemExit(
+            f"ERROR: Failed to delete item '{item_name}' from folder '{parent_id}'. "
+            f"Check that the service account has permission to delete contents in that folder. "
+            f"Drive API error: {e}"
+        ) from e
+    except Exception as e:
+        raise SystemExit(
+            f"ERROR: Failed to delete item '{item_name}' from folder '{parent_id}'. "
+            f"Check that the service account has permission to delete contents in that folder. "
+            f"Drive API error: {e}"
+        ) from e
+
+    return 1
+
+
 def clear_target_folder(parent_id):
     print(f"Clearing contents of folder ID: {parent_id}")
     deleted_items = 0
@@ -71,29 +129,12 @@ def clear_target_folder(parent_id):
             break
 
         for item in items:
-            try:
-                service.files().delete(
-                    fileId=item["id"],
-                    supportsAllDrives=True
-                ).execute()
-            except HttpError as e:
-                if e.resp.status == 404:
-                    print(
-                        f"Skipping item '{item.get('name', item.get('id', 'unknown'))}' because it no longer exists in Drive (404)."
-                    )
-                    continue
-                raise SystemExit(
-                    f"ERROR: Failed to delete item '{item.get('name', item.get('id', 'unknown'))}' from folder '{parent_id}'. "
-                    f"Check that the service account has permission to delete contents in that folder. "
-                    f"Drive API error: {e}"
-                ) from e
-            except Exception as e:
-                raise SystemExit(
-                    f"ERROR: Failed to delete item '{item.get('name', item.get('id', 'unknown'))}' from folder '{parent_id}'. "
-                    f"Check that the service account has permission to delete contents in that folder. "
-                    f"Drive API error: {e}"
-                ) from e
-            deleted_items += 1
+            deleted_items += delete_item(
+                item["id"],
+                item.get("name", "unknown"),
+                item.get("mimeType"),
+                parent_id
+            )
 
         page_token = results.get("nextPageToken")
         if not page_token:
