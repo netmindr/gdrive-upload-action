@@ -4,6 +4,7 @@ import mimetypes
 from pathlib import Path
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
 # Auth
@@ -75,6 +76,17 @@ def clear_target_folder(parent_id):
                     fileId=item["id"],
                     supportsAllDrives=True
                 ).execute()
+            except HttpError as e:
+                if e.resp.status == 404:
+                    print(
+                        f"Skipping item '{item.get('name', item.get('id', 'unknown'))}' because it no longer exists in Drive (404)."
+                    )
+                    continue
+                raise SystemExit(
+                    f"ERROR: Failed to delete item '{item.get('name', item.get('id', 'unknown'))}' from folder '{parent_id}'. "
+                    f"Check that the service account has permission to delete contents in that folder. "
+                    f"Drive API error: {e}"
+                ) from e
             except Exception as e:
                 raise SystemExit(
                     f"ERROR: Failed to delete item '{item.get('name', item.get('id', 'unknown'))}' from folder '{parent_id}'. "
