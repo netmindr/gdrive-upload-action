@@ -19,7 +19,7 @@ Before using this action you will need:
 1. A **Google Cloud project** with the Drive API enabled
 2. A **Google Service Account** with a JSON key
 3. A **Google Shared Drive** (recommended — service accounts have 0 GB quota on personal Drive)
-4. The service account added as a **Contributor** to the Shared Drive
+4. The service account added as a **Manager** to the Shared Drive or target folder so it can list, delete, and recreate files/folders
 5. Two **GitHub secrets** configured in the repo that uses this action:
    - `GDRIVE_CREDENTIALS` — the full JSON contents of the service account key file (unencoded)
    - `GDRIVE_FOLDER_ID` — the ID of the target Shared Drive folder

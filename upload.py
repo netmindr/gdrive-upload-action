@@ -97,7 +97,6 @@ def delete_item(item_id, item_name, mime_type, parent_id):
 
     return 1
 
-
 def clear_target_folder(parent_id):
     print(f"Clearing contents of folder ID: {parent_id}")
     deleted_items = 0
