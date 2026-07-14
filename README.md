@@ -73,6 +73,12 @@ The folder ID is the string at the end of the Google Drive folder URL:
 https://drive.google.com/drive/folders/THIS_IS_YOUR_FOLDER_ID
 ```
 
+## 403 storageQuotaExceeded
+
+According to Google documentation: https://developers.google.com/workspace/drive/api/guides/handle-errors
+
+*Note: Service accounts don't have storage quota and can't own any files. Instead, they must upload files and folders into shared drives, or use OAuth 2.0 to upload items on behalf of a human user.*
+
 ## Author
 
 David Fisher
